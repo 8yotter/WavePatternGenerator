@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wave Pattern Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e50;
+            font-weight: 300;
+            font-size: 2.5rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .controls {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #3498db;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 25px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .download-btn:hover {
+            background: linear-gradient(135deg, #2980b9, #34495e);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .preview-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .preview-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .preview-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: white;
+        }
+
+        .canvas-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .controls {
+                position: static;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .hint {
+            background: #ecf0f1;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 15px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wave Pattern Generator</h1>
+        
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="numWaves">Number of Waves</label>
+                    <input type="number" id="numWaves" value="500" min="10" max="2000" step="10">
+                </div>
+                
+                <div class="control-group">
+                    <label for="spacing">Spacing</label>
+                    <input type="number" id="spacing" value="15" min="1" max="100" step="1">
+                </div>
+                
+                <div class="control-group">
+                    <label for="amplitude">Amplitude</label>
+                    <input type="number" id="amplitude" value="20" min="1" max="200" step="1">
+                </div>
+                
+                <div class="control-group">
+                    <label for="freq">Frequency</label>
+                    <input type="number" id="freq" value="0.03" min="0.001" max="1" step="0.001">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lineWeight">Line Weight</label>
+                    <input type="number" id="lineWeight" value="2" min="0.1" max="20" step="0.1">
+                </div>
+                
+                <button class="download-btn" onclick="downloadSVG()">Download SVG</button>
+                
+                <div class="hint">
+                    Adjust the parameters above to create your custom wave pattern. The preview updates in real-time as you change values.
+                </div>
+            </div>
+            
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h2>Live Preview</h2>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="canvas" width="1920" height="1080"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Get input elements
+        const numWavesInput = document.getElementById('numWaves');
+        const spacingInput = document.getElementById('spacing');
+        const amplitudeInput = document.getElementById('amplitude');
+        const freqInput = document.getElementById('freq');
+        const lineWeightInput = document.getElementById('lineWeight');
+
+        function drawPattern() {
+            // Get current values
+            const numWaves = parseInt(numWavesInput.value);
+            const spacing = parseInt(spacingInput.value);
+            const amplitude = parseInt(amplitudeInput.value);
+            const freq = parseFloat(freqInput.value);
+            const lineWeight = parseFloat(lineWeightInput.value);
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Set canvas background to white
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Set stroke properties
+            ctx.strokeStyle = '#00bcd4';
+            ctx.lineWidth = lineWeight;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Center the pattern
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+
+            // First set of waves (rotated 45 degrees)
+            ctx.save();
+            ctx.rotate(Math.PI / 4);
+            
+            for (let j = -numWaves / 2; j < numWaves / 2; j++) {
+                ctx.beginPath();
+                for (let x = -canvas.width; x < canvas.width; x++) {
+                    let y = j * spacing + amplitude * Math.sin(freq * x);
+                    if (x === -canvas.width) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Second set of waves (rotated -45 degrees)
+            ctx.save();
+            ctx.rotate(-Math.PI / 4);
+            
+            for (let j = -numWaves / 2; j < numWaves / 2; j++) {
+                ctx.beginPath();
+                for (let x = -canvas.width; x < canvas.width; x++) {
+                    let y = j * spacing + amplitude * Math.sin(freq * x);
+                    if (x === -canvas.width) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        function generateSVG() {
+            // Get current values
+            const numWaves = parseInt(numWavesInput.value);
+            const spacing = parseInt(spacingInput.value);
+            const amplitude = parseInt(amplitudeInput.value);
+            const freq = parseFloat(freqInput.value);
+            const lineWeight = parseFloat(lineWeightInput.value);
+
+            const width = 1920;
+            const height = 1080;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            let svgContent = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+            svgContent += `<rect width="100%" height="100%" fill="white"/>`;
+            svgContent += `<g stroke="#00bcd4" stroke-width="${lineWeight}" fill="none" stroke-linecap="round" stroke-linejoin="round">`;
+
+            // Generate first set of waves (45 degrees)
+            const cos45 = Math.cos(Math.PI / 4);
+            const sin45 = Math.sin(Math.PI / 4);
+            
+            for (let j = -numWaves / 2; j < numWaves / 2; j++) {
+                let pathData = '';
+                for (let x = -width; x < width; x += 2) {
+                    let y = j * spacing + amplitude * Math.sin(freq * x);
+                    
+                    // Rotate by 45 degrees
+                    let rotatedX = x * cos45 - y * sin45 + centerX;
+                    let rotatedY = x * sin45 + y * cos45 + centerY;
+                    
+                    if (x === -width) {
+                        pathData += `M ${rotatedX.toFixed(2)} ${rotatedY.toFixed(2)}`;
+                    } else {
+                        pathData += ` L ${rotatedX.toFixed(2)} ${rotatedY.toFixed(2)}`;
+                    }
+                }
+                svgContent += `<path d="${pathData}"/>`;
+            }
+
+            // Generate second set of waves (-45 degrees)
+            const cosNeg45 = Math.cos(-Math.PI / 4);
+            const sinNeg45 = Math.sin(-Math.PI / 4);
+            
+            for (let j = -numWaves / 2; j < numWaves / 2; j++) {
+                let pathData = '';
+                for (let x = -width; x < width; x += 2) {
+                    let y = j * spacing + amplitude * Math.sin(freq * x);
+                    
+                    // Rotate by -45 degrees
+                    let rotatedX = x * cosNeg45 - y * sinNeg45 + centerX;
+                    let rotatedY = x * sinNeg45 + y * cosNeg45 + centerY;
+                    
+                    if (x === -width) {
+                        pathData += `M ${rotatedX.toFixed(2)} ${rotatedY.toFixed(2)}`;
+                    } else {
+                        pathData += ` L ${rotatedX.toFixed(2)} ${rotatedY.toFixed(2)}`;
+                    }
+                }
+                svgContent += `<path d="${pathData}"/>`;
+            }
+
+            svgContent += '</g></svg>';
+            return svgContent;
+        }
+
+        function downloadSVG() {
+            const svgContent = generateSVG();
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `wave-pattern-${Date.now()}.svg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            URL.revokeObjectURL(url);
+        }
+
+        // Add event listeners to all inputs
+        [numWavesInput, spacingInput, amplitudeInput, freqInput, lineWeightInput].forEach(input => {
+            input.addEventListener('input', drawPattern);
+        });
+
+        // Initial draw
+        drawPattern();
+    </script>
+</body>
+</html>
